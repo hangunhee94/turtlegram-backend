@@ -39,7 +39,6 @@ def hello_world(user):
 
 
 @ app.route("/signup", methods=["POST"])
-@authorize
 def sign_up():
     data = json.loads(request.data)
     print(data.get('email'))
@@ -60,7 +59,6 @@ def sign_up():
 
 
 @ app.route("/login", methods=["POST"])
-@authorize
 def login():
     print(request)
     data = json.loads(request.data)
@@ -105,6 +103,36 @@ def get_user_info(user):
     })
 
     return jsonify({"message": "success", "email": result["email"]})
+
+
+@app.route("/article", methods=["POST"])
+@authorize
+def post_article(user):
+    data = json.loads(request.data)
+    print(data)
+
+    db_user = db.users.find_one({'_id': ObjectId(user.get('id'))})
+
+    now = datetime.now().strftime("%H:%M:%S")
+    doc = {
+        'title': data.get('title', None),
+        'content': data.get('content', None),
+        'user': user['id'],
+        'user_email': db_user['email'],
+        'time': now
+    }
+    print(doc)
+
+    db.article.insert_one(doc)
+    return jsonify({"message": "success"})
+
+
+@app.route("/article", methods=["GET"])
+def get_article():
+    articles = list(db.article.find())
+    for article in articles:
+        article["_id"] = str(article["_id"])
+    return jsonify({"message": "success", "articles": articles})
 
 
 if __name__ == '__main__':
